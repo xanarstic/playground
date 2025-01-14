@@ -6,7 +6,7 @@ use CodeIgniter\Model;
 
 class SettingModel extends Model
 {
-    protected $table      = 'setting';
+    protected $table = 'setting';
     protected $primaryKey = 'id_setting';
     protected $allowedFields = ['namawebsite', 'icontab', 'iconlogin', 'iconmenu'];
     protected $useTimestamps = true;

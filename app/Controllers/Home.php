@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\UserModel;
 use App\Models\SettingModel;
+use App\Models\Wahanamodel;
 use CodeIgniter\Controller;
 use CodeIgniter\Session\Session;
 
@@ -199,90 +200,158 @@ class Home extends BaseController
 
 		$session = session();
 
+		$wahanaModel = new \App\Models\WahanaModel();
+		$wahanas = $wahanaModel->findAll();
+
 		// Check if the user is logged in
 		if (!$session->get('logged_in')) {
 			return redirect()->to('/home/login');
 		}
 
-		echo view('wahana');
+		echo view('wahana', ['wahanas' => $wahanas]);
 		echo view('menu', ['setting' => $settingData]);
 	}
+	public function addWahana()
+	{
+		// Validasi data input
+		$validation = \Config\Services::validation();
+
+		// Ambil data dari form
+		$data = [
+			'nama_wahana' => $this->request->getPost('nama_wahana'),
+			'harga' => $this->request->getPost('harga'),
+			'kapasitas' => $this->request->getPost('kapasitas'),
+			'status' => $this->request->getPost('status')
+		];
+
+		// Validasi input menggunakan grup 'wahana'
+		if (!$validation->run($data, 'wahana')) {
+			return redirect()->back()->withInput()->with('errors', $validation->getErrors());
+		}
+
+		// Simpan data ke database
+		$wahanaModel = new WahanaModel();
+		$wahanaModel->addWahana($data);
+
+		// Set flash message dan redirect
+		session()->setFlashdata('success', 'Wahana berhasil ditambahkan!');
+		return redirect()->to('/home/wahana');
+	}
+
 
 	public function setting()
 	{
 		$session = session();
-		$settingModel = new SettingModel();
+		$settingModel = new \App\Models\SettingModel();
 
-		// Fetch setting data
-		$settingData = $settingModel->first(); // Fetch the first row, assuming only one settings row
-
-		// Check if the user is logged in
+		// Periksa apakah pengguna sudah login
 		if (!$session->get('logged_in')) {
 			return redirect()->to('/home/login');
 		}
 
-		// Send data to the 'setting' view
+		// Ambil data pengaturan dari database
+		$settingData = $settingModel->first(); // Ambil baris pertama dari tabel setting
+
+		// Kirim data ke view
+		echo view('header', ['setting' => $settingData]);
 		echo view('setting', ['setting' => $settingData]);
 		echo view('menu', ['setting' => $settingData]);
 	}
 
 	public function updateSettings()
 	{
-		$session = session();
+		$settingModel = new \App\Models\SettingModel();
+
+		// Ambil data dari form
+		$data = [
+			'namawebsite' => $this->request->getPost('website-name'),
+		];
+
+		// Proses upload file
+		$iconTab = $this->request->getFile('website-icon');
+		if ($iconTab->isValid() && !$iconTab->hasMoved()) {
+			// Cek apakah ada gambar lama dan hapus
+			$oldIconTab = $settingModel->first()['icontab']; // Mengambil nama file lama
+			if ($oldIconTab && file_exists(FCPATH . 'img/' . $oldIconTab)) {
+				unlink(FCPATH . 'img/' . $oldIconTab); // Menghapus file lama
+			}
+
+			// Gunakan nama file yang sama jika file sudah ada
+			$iconTabName = $iconTab->getName(); // Menggunakan nama file yang sama
+
+			// Pindahkan file ke folder img
+			$iconTab->move(FCPATH . 'img', $iconTabName);
+			$data['icontab'] = $iconTabName;
+		}
+
+		$iconLogin = $this->request->getFile('sidebar-bg');
+		if ($iconLogin->isValid() && !$iconLogin->hasMoved()) {
+			// Cek apakah ada gambar lama dan hapus
+			$oldIconLogin = $settingModel->first()['iconlogin'];
+			if ($oldIconLogin && file_exists(FCPATH . 'img/' . $oldIconLogin)) {
+				unlink(FCPATH . 'img/' . $oldIconLogin); // Menghapus file lama
+			}
+
+			// Gunakan nama file yang sama jika file sudah ada
+			$iconLoginName = $iconLogin->getName(); // Menggunakan nama file yang sama
+
+			// Pindahkan file ke folder img
+			$iconLogin->move(FCPATH . 'img', $iconLoginName);
+			$data['iconlogin'] = $iconLoginName;
+		}
+
+		$iconMenu = $this->request->getFile('background-menu');
+		if ($iconMenu->isValid() && !$iconMenu->hasMoved()) {
+			// Cek apakah ada gambar lama dan hapus
+			$oldIconMenu = $settingModel->first()['iconmenu'];
+			if ($oldIconMenu && file_exists(FCPATH . 'img/' . $oldIconMenu)) {
+				unlink(FCPATH . 'img/' . $oldIconMenu); // Menghapus file lama
+			}
+
+			// Gunakan nama file yang sama jika file sudah ada
+			$iconMenuName = $iconMenu->getName(); // Menggunakan nama file yang sama
+
+			// Pindahkan file ke folder img
+			$iconMenu->move(FCPATH . 'img', $iconMenuName);
+			$data['iconmenu'] = $iconMenuName;
+		}
+
+		// Debugging: Periksa data yang akan diupdate
+		var_dump($data);
+
+		// ID yang digunakan untuk update
+		$idSetting = 1; // Pastikan hanya ada satu baris data
+		$result = $settingModel->updateSettings($data, $idSetting);
+
+		// Debugging: Cek apakah update berhasil
+		if (!$result) {
+			echo "Update failed!";
+		} else {
+			echo "Update successful!";
+		}
+
+		// Verifikasi apakah data di database terubah
+		$updatedSetting = $settingModel->find($idSetting);
+		var_dump($updatedSetting); // Debug: Menampilkan data yang telah diupdate
+
+		// Redirect dengan pesan sukses
+		return redirect()->to('/home/setting')->with('success', 'Settings updated successfully.');
+	}
+
+
+
+	// Upload header photo if available
+	// if ($files['header-photo'] && $files['header-photo']->isValid()) {
+	// 	$data['iconlogin'] = $files['header-photo']->store('img/'); // Save to img folder
+	// }
+
+	public function test()
+	{
 		$settingModel = new SettingModel();
 
-		// Check if the user is logged in
-		if (!$session->get('logged_in')) {
-			return redirect()->to('/home/login');
-		}
+		// Fetch setting data
+		$settingData = $settingModel->first(); // Fetch the first row, assuming only one settings row
 
-		// Handle form submission
-		if ($this->request->getMethod() == 'post') {
-			$validation = \Config\Services::validation();
-
-			// Validate form data
-			$validation->setRules([
-				'website-name' => 'required|min_length[3]',
-				'app-title' => 'required|min_length[3]',
-				'website-icon' => 'is_image[website-icon]',
-				'sidebar-bg' => 'is_image[sidebar-bg]',
-				'header-photo' => 'is_image[header-photo]',
-			]);
-
-			if ($validation->withRequest($this->request)->run()) {
-				// Prepare data to be updated
-				$data = [
-					'namawebsite' => $this->request->getPost('website-name'),
-					'icontab' => $this->request->getPost('app-title'),
-				];
-
-				// Handle file uploads
-				$files = $this->request->getFiles();
-
-				// Upload website icon if available
-				if ($files['website-icon'] && $files['website-icon']->isValid()) {
-					$data['iconlogin'] = $files['website-icon']->store('img/'); // Save to img folder
-				}
-
-				// Upload sidebar background if available
-				if ($files['sidebar-bg'] && $files['sidebar-bg']->isValid()) {
-					$data['iconmenu'] = $files['sidebar-bg']->store('img/'); // Save to img folder
-				}
-
-				// Upload header photo if available
-				if ($files['header-photo'] && $files['header-photo']->isValid()) {
-					$data['iconlogin'] = $files['header-photo']->store('img/'); // Save to img folder
-				}
-
-				// Update settings in the database (Assuming id_setting = 1 for settings)
-				$settingModel->update(1, $data);
-
-				// Redirect back to settings page with a success message
-				return redirect()->to('/settings')->with('success', 'Settings updated successfully!');
-			} else {
-				// If validation fails, return back with errors
-				return redirect()->back()->withInput()->with('errors', $validation->getErrors());
-			}
-		}
+		echo view('test', ['setting' => $settingData]);
 	}
 }

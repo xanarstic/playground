@@ -1,10 +1,10 @@
 <div class="container">
-    <div class="sidebar-header">
-        <img src="<?= base_url('img/' . esc($setting['iconlogin'])) ?>" alt="Website Icon" class="website-icon">
+    <div class="split left"
+        style="background: url('<?= base_url('img/' . esc($setting['iconlogin']) . '?' . time()) ?>') no-repeat center center/cover;">
     </div>
     <div class="split right">
         <div class="login-box">
-            <!-- Title for the application -->
+            <!-- Nama Website -->
             <h1 class="app-title"><?= esc($setting['namawebsite']) ?></h1>
 
             <!-- Login text -->

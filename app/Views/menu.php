@@ -82,8 +82,10 @@
 
 <body>
     <div class="sidebar">
-        <!-- Website Icon -->
-        <div class="split left" style="background: url('<?= base_url('img/' . esc($setting['iconmenu'])) ?>') no-repeat center center/cover;">
+        <div class="sidebar-header">
+            <!-- Icon Login -->
+            <img src="<?= base_url('img/' . esc($setting['iconmenu']) . '?' . time()) ?>" alt="Website Icon"
+                class="website-icon">
         </div>
         <!-- Navigation Links -->
         <ul>

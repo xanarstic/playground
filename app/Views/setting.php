@@ -72,6 +72,18 @@
                 /* Adjust for smaller sidebar */
             }
         }
+
+        .form-container img {
+            width: 150px;
+            /* Atur lebar gambar */
+            height: 150px;
+            /* Atur tinggi gambar */
+            object-fit: cover;
+            /* Agar gambar tetap proporsional dan tidak terdistorsi */
+            margin-bottom: 20px;
+            border-radius: 8px;
+            /* Untuk membuat gambar sedikit membulat pada pojoknya */
+        }
     </style>
 </head>
 
@@ -79,41 +91,56 @@
     <div class="dashboard">
         <header>
             <h1>Settings</h1>
+            <?php if (session()->getFlashdata('success')): ?>
+                <div class="alert alert-success"><?= session()->getFlashdata('success') ?></div>
+            <?php elseif (session()->getFlashdata('errors')): ?>
+                <div class="alert alert-danger"><?= session()->getFlashdata('errors') ?></div>
+            <?php endif; ?>
         </header>
         <main>
             <form action="/home/updateSettings" method="POST" enctype="multipart/form-data">
+                <?= csrf_field() ?>
                 <div class="form-container">
-                    <!-- Input for uploading website icon -->
-                    <label for="website-icon">Website Icon</label>
+                    <!-- Input untuk Icon Tab -->
+                    <label for="website-icon">Icon Tab</label>
                     <input type="file" id="website-icon" name="website-icon" accept="image/*">
+                    <img src="<?= base_url('img/' . esc($setting['icontab'] ?? 'default-icon.png')) ?>" alt="Icon Tab"
+                        class="website-icon">
 
-                    <!-- Input for uploading sidebar background -->
-                    <label for="sidebar-bg">Sidebar Background</label>
+                    <!-- Input untuk Icon Login -->
+                    <label for="sidebar-bg">Icon Login</label>
                     <input type="file" id="sidebar-bg" name="sidebar-bg" accept="image/*">
+                    <img src="<?= base_url('img/' . esc($setting['iconlogin'] ?? 'default-login.png')) ?>"
+                        alt="Icon Login" class="icon-login">
 
-                    <!-- Input for setting app title -->
-                    <label for="app-title">App Title</label>
-                    <input type="file" id="app-title" name="app-title" value="<?= esc($setting['icontab']) ?>" placeholder="Enter app title">
+                    <!-- Input untuk Background Menu -->
+                    <label for="background-menu">Background Menu</label>
+                    <input type="file" id="background-menu" name="background-menu" accept="image/*">
+                    <img src="<?= base_url('img/' . esc($setting['iconmenu'] ?? 'default-menu.png')) ?>"
+                        alt="Background Menu" class="background-menu">
 
-                    <!-- Input for setting website name -->
+                    <!-- Input untuk Nama Website -->
                     <label for="website-name">Website Name</label>
-                    <input type="text" id="website-name" name="website-name" value="<?= esc($setting['namawebsite']) ?>" placeholder="Enter website name">
+                    <input type="text" id="website-name" name="website-name"
+                        value="<?= esc($setting['namawebsite'] ?? '') ?>" placeholder="Enter website name">
 
-                    <!-- Submit button -->
+                    <!-- Tombol Submit -->
                     <button type="submit">Save Settings</button>
                 </div>
             </form>
-
-
-            <!-- Input for uploading header photo -->
-            <!-- <label for="header-photo">Header Photo</label>
-                    <input type="file" id="header-photo" name="header-photo" accept="image/*"> -->
-            <!-- Input for setting app title -->
-
-
-            tes
         </main>
     </div>
 </body>
+
+
+
+
+<!-- Input for uploading header photo -->
+<!-- <label for="header-photo">Header Photo</label>
+                    <input type="file" id="header-photo" name="header-photo" accept="image/*"> -->
+<!-- Input for setting app title -->
+
+
+
 
 </html>
