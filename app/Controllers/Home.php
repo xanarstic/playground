@@ -213,31 +213,7 @@ class Home extends BaseController
 	}
 	public function addWahana()
 	{
-		// Validasi data input
-		$validation = \Config\Services::validation();
-
-		// Ambil data dari form
-		$data = [
-			'nama_wahana' => $this->request->getPost('nama_wahana'),
-			'harga' => $this->request->getPost('harga'),
-			'kapasitas' => $this->request->getPost('kapasitas'),
-			'status' => $this->request->getPost('status')
-		];
-
-		// Validasi input menggunakan grup 'wahana'
-		if (!$validation->run($data, 'wahana')) {
-			return redirect()->back()->withInput()->with('errors', $validation->getErrors());
-		}
-
-		// Simpan data ke database
-		$wahanaModel = new WahanaModel();
-		$wahanaModel->addWahana($data);
-
-		// Set flash message dan redirect
-		session()->setFlashdata('success', 'Wahana berhasil ditambahkan!');
-		return redirect()->to('/home/wahana');
 	}
-
 
 	public function setting()
 	{
