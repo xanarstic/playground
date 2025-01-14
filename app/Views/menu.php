@@ -31,8 +31,7 @@
     }
 
     .sidebar-header .website-icon {
-        width: 100px;
-        border-radius: 50%;
+        width: 200px;
         margin-bottom: 20px;
     }
 
@@ -40,6 +39,8 @@
         list-style: none;
         padding: 0;
         width: 100%;
+        display: flex;
+        flex-direction: column;
     }
 
     .sidebar ul li {
@@ -56,11 +57,16 @@
     }
 
     .sidebar ul li a:hover {
-        background-color: #575757;
+        background-color: rgb(228, 226, 226);
     }
 
     .sidebar ul li a i {
         margin-right: 10px;
+    }
+
+    /* Move logout button to the bottom */
+    .logout-btn {
+        margin-top: auto;
     }
 
     @media (max-width: 768px) {
@@ -77,22 +83,15 @@
 <body>
     <div class="sidebar">
         <!-- Website Icon -->
-        <div class="sidebar-header">
-            <img src="<?= base_url('img/ph.png') ?>" alt="Website Icon" class="website-icon">
+        <div class="split left" style="background: url('<?= base_url('img/' . esc($setting['iconmenu'])) ?>') no-repeat center center/cover;">
         </div>
-
         <!-- Navigation Links -->
         <ul>
+            <!-- Always visible for all users -->
             <li>
                 <a href="<?= base_url('/home/dashboard') ?>">
                     <i class="fas fa-tachometer-alt"></i>
                     <span>Dashboard</span>
-                </a>
-            </li>
-            <li>
-                <a href="<?= base_url('/home/user') ?>">
-                    <i class="fas fa-users"></i>
-                    <span>User</span>
                 </a>
             </li>
             <li>
@@ -107,14 +106,31 @@
                     <span>Wahana</span>
                 </a>
             </li>
-            <li>
-                <a href="<?= base_url('/home/setting') ?>">
-                    <i class="fas fa-cogs"></i>
-                    <span>Setting</span>
+
+            <!-- Conditional menu based on user level -->
+            <?php if (session()->get('level') === 'Admin'): ?>
+                <li>
+                    <a href="<?= base_url('/home/user') ?>">
+                        <i class="fas fa-users"></i>
+                        <span>User</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="<?= base_url('/home/setting') ?>">
+                        <i class="fas fa-cogs"></i>
+                        <span>Setting</span>
+                    </a>
+                </li>
+            <?php endif; ?>
+
+            <!-- Logout Button (Visible for all users) -->
+            <li class="logout-btn">
+                <a href="<?= base_url('/home/logout') ?>">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
                 </a>
             </li>
         </ul>
-
     </div>
 </body>
 

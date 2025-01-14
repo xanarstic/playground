@@ -82,7 +82,8 @@
 <body>
     <div class="dashboard">
         <header>
-            <h1>Welcome to the Dashboard</h1>
+            <h1>Dashboard</h1>
+            <h2 class="welcome-message">Welcome, <span class="username"><?= session()->get('username') ?></span> (<span class="level"><?= session()->get('level') ?></span>)</h2>
         </header>
         <main>
             <!-- Tables Section -->
@@ -134,5 +135,26 @@
         </main>
     </div>
 </body>
+
+<style>
+    @keyframes fadeInUp {
+        0% {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Optional: Add a hover effect for the username and level */
+    .username:hover,
+    .level:hover {
+        text-decoration: underline;
+        cursor: pointer;
+    }
+</style>
 
 </html>
