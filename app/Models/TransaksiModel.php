@@ -16,4 +16,9 @@ class TransaksiModel extends Model
         'kembalian',
         'payment'
     ];
+
+    public function getTransaksiByPenyewaan($id_penyewaan)
+    {
+        return $this->where('id_penyewaan', $id_penyewaan)->findAll();
+    }
 }

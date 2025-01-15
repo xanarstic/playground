@@ -187,10 +187,13 @@ class Home extends BaseController
 	public function transaksi()
 	{
 		$settingModel = new SettingModel();
+		$transaksiModel = new TransaksiModel();
 
 		// Fetch setting data
-		$settingData = $settingModel->first(); // Fetch the first row, assuming only one settings row
+		$settingData = $settingModel->first(); // Assuming only one settings row
 
+		// Fetch transaksi data
+		$transaksiData = $transaksiModel->findAll(); // Atau gunakan metode lain untuk filter, misalnya getTransaksiByPenyewaan($id_penyewaan)
 
 		$session = session();
 
@@ -199,10 +202,11 @@ class Home extends BaseController
 			return redirect()->to('/home/login');
 		}
 
-		echo view('transaksi');
+		// Send data to view
+		echo view('transaksi', ['transaksi' => $transaksiData, 'setting' => $settingData]);
 		echo view('menu', ['setting' => $settingData]);
 	}
-
+	
 	public function penyewaan()
 	{
 		$settingModel = new \App\Models\SettingModel();
@@ -339,13 +343,18 @@ class Home extends BaseController
 
 	public function prosesBayar()
 	{
-		// Get the input values
+		// Log incoming POST data
+		log_message('debug', 'POST data: ' . print_r($this->request->getPost(), true));
+
+		// Ambil nilai input
 		$idPenyewaan = $this->request->getPost('id_penyewaan');
 		$totalBayar = $this->request->getPost('total');
 		$bayar = $this->request->getPost('bayar');
 		$kembalian = $this->request->getPost('kembalian');
 		$paymentMethod = $this->request->getPost('payment');
 
+		// Debugging: Periksa apakah id_penyewaan diterima dengan benar
+		log_message('debug', 'id_penyewaan: ' . $idPenyewaan);
 		// Validation: Ensure bayar is not less than total
 		if ($bayar < $totalBayar) {
 			session()->setFlashdata('error', 'Pembayaran tidak cukup!');
@@ -368,6 +377,7 @@ class Home extends BaseController
 		// Insert data into Transaksi table
 		if (!$this->transaksiModel->insert($dataTransaksi)) {
 			session()->setFlashdata('error', 'Terjadi kesalahan saat menyimpan transaksi!');
+			log_message('error', 'Failed to insert transaksi: ' . print_r($dataTransaksi, true)); // Log failure
 			return redirect()->back();
 		}
 
@@ -378,6 +388,7 @@ class Home extends BaseController
 
 		if (!$this->penyewaanModel->update($idPenyewaan, $updateData)) {
 			session()->setFlashdata('error', 'Terjadi kesalahan saat memperbarui status penyewaan!');
+			log_message('error', 'Failed to update penyewaan status: ' . $idPenyewaan); // Log failure
 			return redirect()->back();
 		}
 

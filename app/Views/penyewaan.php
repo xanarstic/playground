@@ -152,11 +152,6 @@
                 </div>
             <?php endif; ?>
         </header>
-        <?php if (session()->getFlashdata('message')): ?>
-            <div class="alert alert-success">
-                <?= session()->getFlashdata('message') ?>
-            </div>
-        <?php endif; ?>
 
         <main>
             <button class="btn-add" id="btnAdd">Tambah Sewa</button>
@@ -331,7 +326,7 @@
     <div class="popup" id="popupBayarForm">
         <div class="popup-content">
             <h3>Pembayaran Penyewaan</h3>
-            <form action="/home/prosesBayar" method="POST">
+            <form action="/home/prosesBayar" method="POST" id="bayarForm">
                 <input type="hidden" name="id_penyewaan" id="id_penyewaan" required>
 
                 <label for="total">Total</label>
@@ -354,7 +349,6 @@
             </form>
         </div>
     </div>
-
 
     <script>
         const btnAdd = document.getElementById('btnAdd');
@@ -416,7 +410,7 @@
         // Panggil fungsi updateWaktuSelesai setiap kali durasi atau waktu mulai berubah
         document.getElementById('waktu_mulai').addEventListener('change', updateWaktuSelesai);
         document.getElementById('durasi').addEventListener('change', updateWaktuSelesai);
-        document.querySelector('form').addEventListener('submit', function () {
+        document.querySelector('form').addEventListener('submit', function() {
             // Set waktu_selesai sebelum form disubmit
             updateWaktuSelesai();
         });
@@ -456,7 +450,8 @@
         function bayarPenyewaan(id, total) {
             document.getElementById('id_penyewaan').value = id;
             document.getElementById('total_bayar').value = total;
-            document.getElementById('popupBayarForm').style.display = 'flex';  // Tampilkan pop-up
+            console.log("ID Penyewaan (JS): " + id); // Log ID here to check
+            document.getElementById('popupBayarForm').style.display = 'flex'; // Tampilkan pop-up
         }
 
         // Fungsi untuk menghitung kembalian
@@ -470,18 +465,43 @@
             }
         }
 
-        // Menutup pop-up bayar
-        document.getElementById('btnCloseBayar').addEventListener('click', function () {
-            document.getElementById('popupBayarForm').style.display = 'none';  // Sembunyikan pop-up
-        });
+        // Function to set the id_penyewaan dynamically
+        function setIdPenyewaan(id) {
+            document.getElementById('id_penyewaan').value = id;
+        }
 
-        // Menutup pop-up jika klik di luar konten
-        window.addEventListener('click', function (event) {
+        function bayarPenyewaan(id, total) {
+            document.getElementById('id_penyewaan').value = id;
+            document.getElementById('total_bayar').value = total;
+
+            // Debugging: Cek apakah id_penyewaan sudah di-set dengan benar
+            console.log("ID Penyewaan yang dikirim: " + id);
+
+            document.getElementById('popupBayarForm').style.display = 'flex'; // Tampilkan pop-up
+        }
+
+        // Open popup and set id_penyewaan
+        document.getElementById('openBayarPopupButton').onclick = function() {
+            setIdPenyewaan(123); // Replace 123 with the actual id
+            document.getElementById('popupBayarForm').style.display = 'block';
+        };
+
+        // Close the popup when clicking the close button
+        document.getElementById('btnCloseBayar').onclick = function() {
+            document.getElementById('popupBayarForm').style.display = 'none';
+        };
+
+        // Close the popup if clicking outside the content
+        window.addEventListener('click', function(event) {
             if (event.target === document.getElementById('popupBayarForm')) {
-                document.getElementById('popupBayarForm').style.display = 'none';  // Sembunyikan pop-up
+                document.getElementById('popupBayarForm').style.display = 'none';
             }
         });
 
+        document.getElementById('bayarForm').onsubmit = function() {
+            const idPenyewaan = document.getElementById('id_penyewaan').value;
+            console.log("Form akan disubmit dengan id_penyewaan: " + idPenyewaan);
+        };
     </script>
 </body>
 
