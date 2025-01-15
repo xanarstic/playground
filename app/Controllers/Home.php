@@ -6,6 +6,7 @@ use App\Models\UserModel;
 use App\Models\SettingModel;
 use App\Models\Wahanamodel;
 use App\Models\Penyewaanmodel;
+use App\Models\TransaksiModel;
 use CodeIgniter\Controller;
 use CodeIgniter\Session\Session;
 
@@ -13,11 +14,14 @@ class Home extends BaseController
 {
 	protected $penyewaanModel;
 	protected $wahanaModel;
+	protected $transaksiModel;
 
 	public function __construct()
 	{
 		$this->penyewaanModel = new PenyewaanModel();
 		$this->wahanaModel = new WahanaModel();
+		$this->transaksiModel = new TransaksiModel();
+		helper('string');
 	}
 	public function dashboard()
 	{
@@ -199,14 +203,9 @@ class Home extends BaseController
 		echo view('menu', ['setting' => $settingData]);
 	}
 
-	public function Penyewaan()
+	public function penyewaan()
 	{
-		$settingModel = new SettingModel();
-		$penyewaanModel = new PenyewaanModel(); // Load model penyewaan
-		$wahanaModel = new WahanaModel(); // Add the wahana model for fetching wahana data
-
-		// Fetch setting data
-		$settingData = $settingModel->first(); // Fetch the first row, assuming only one settings row
+		$settingModel = new \App\Models\SettingModel();
 
 		$session = session();
 
@@ -216,69 +215,177 @@ class Home extends BaseController
 		}
 
 		$data = [
-			'penyewaan' => $penyewaanModel->findAll(), // Ambil semua data penyewaan
-			'wahana' => $wahanaModel->findAll() // Ambil semua data wahana
+			'penyewaan' => $this->penyewaanModel->getAllPenyewaan(), // Ambil data penyewaan dengan join ke tabel wahana
+			'wahana' => $this->wahanaModel->findAll(),
+			'setting' => $settingModel->first(),
 		];
+
 		// Load views
-		echo view('menu', ['setting' => $settingData]);
+		echo view('menu', ['setting' => $data['setting']]);
 		return view('penyewaan', $data);
 	}
 
-	public function tambahsewa()
+	public function tambahSewa()
 	{
+		$validation = \Config\Services::validation();
+
 		// Validasi input
-		if (!$this->validate([
-			'id_wahana'   => 'required|integer',
-			'tanggal'     => 'required|valid_date',
-			'waktu_mulai' => 'required',
-			'durasi'      => 'required',
-			'nama_ortu'   => 'required',
-			'nohp'        => 'required|numeric',
-			'nama_anak'   => 'required'
-		])) {
-			return redirect()->back()->with('errors', $this->validator->getErrors());
+		if (
+			!$this->validate([
+				'id_wahana' => 'required',
+				'tanggal' => 'required',
+				'waktu_mulai' => 'required',
+				'durasi' => 'required|integer',
+				'total' => 'required',
+				'nama_ortu' => 'required',
+				'nohp' => 'required',
+				'nama_anak' => 'required'
+			])
+		) {
+			return redirect()->back()->withInput()->with('errors', $validation->getErrors());
 		}
 
-		// Ambil input
+		// Mengambil inputan
+		$id_wahana = $this->request->getPost('id_wahana');
+		$tanggal = $this->request->getPost('tanggal');
+		$waktu_mulai = $this->request->getPost('waktu_mulai');
+		$durasi = $this->request->getPost('durasi');
+		$total = $this->request->getPost('total');
+		$nama_ortu = $this->request->getPost('nama_ortu');
+		$nohp = $this->request->getPost('nohp');
+		$nama_anak = $this->request->getPost('nama_anak');
+
+		// Hitung waktu selesai
+		$waktuMulaiDate = new \DateTime($tanggal . ' ' . $waktu_mulai);
+		$waktuMulaiDate->add(new \DateInterval('PT' . $durasi . 'H')); // Tambah durasi dalam jam
+
+		// Format waktu selesai
+		$waktu_selesai = $waktuMulaiDate->format('H:i');
+
+		// Debug log: Periksa nilai waktu selesai
+		log_message('debug', 'Waktu selesai: ' . $waktu_selesai);
+
+		// Simpan data penyewaan
+		$this->penyewaanModel->save([
+			'id_wahana' => $id_wahana,
+			'tanggal' => $tanggal,
+			'waktu_mulai' => $waktu_mulai,
+			'durasi' => $durasi,
+			'total' => $total,
+			'status' => 'Pending',
+			'nama_ortu' => $nama_ortu,
+			'nohp' => $nohp,
+			'nama_anak' => $nama_anak,
+			'waktu_selesai' => $waktu_selesai,
+		]);
+
+		return redirect()->to('/home/penyewaan');
+	}
+
+	public function updateSewa()
+	{
+		$validation = \Config\Services::validation();
+
+		// Validasi input
+		if (
+			!$this->validate([
+				'id_wahana' => 'required',
+				'tanggal' => 'required',
+				'waktu_mulai' => 'required',
+				'durasi' => 'required|integer',
+				'total' => 'required',
+				'nama_ortu' => 'required',
+				'nohp' => 'required',
+				'nama_anak' => 'required'
+			])
+		) {
+			return redirect()->back()->withInput()->with('errors', $validation->getErrors());
+		}
+
+		// Ambil data input dan update data
 		$data = [
-			'id_wahana'   => $this->request->getPost('id_wahana'),
-			'tanggal'     => date('Y-m-d'), // Set the current date
-			'waktu_mulai' => date('Y-m-d H:i:s'), // Set the current time
-			'durasi'      => $this->request->getPost('durasi'),
-			'total'       => $this->calculateTotal(
-				$this->request->getPost('id_wahana'),
-				$this->request->getPost('durasi')
-			),
-			'status'      => 'Pending',
-			'nama_ortu'   => $this->request->getPost('nama_ortu'),
-			'nohp'        => $this->request->getPost('nohp'),
-			'nama_anak'   => $this->request->getPost('nama_anak')
+			'id_wahana' => $this->request->getPost('id_wahana'),
+			'tanggal' => $this->request->getPost('tanggal'),
+			'waktu_mulai' => $this->request->getPost('waktu_mulai'),
+			'durasi' => $this->request->getPost('durasi'),
+			'total' => $this->request->getPost('total'),
+			'nama_ortu' => $this->request->getPost('nama_ortu'),
+			'nohp' => $this->request->getPost('nohp'),
+			'nama_anak' => $this->request->getPost('nama_anak'),
+			'waktu_selesai' => $this->request->getPost('waktu_selesai')
 		];
 
-		// Simpan ke database
-		$this->penyewaanModel->save($data);
+		// Update data
+		$this->penyewaanModel->update($this->request->getPost('id_penyewaan'), $data);
 
-		return redirect()->to('home/penyewaan')->with('success', 'Data penyewaan berhasil ditambahkan!');
+		return redirect()->to('/home/penyewaan')->with('message', 'Data penyewaan berhasil diupdate.');
 	}
 
-	// Fungsi untuk menghitung total berdasarkan wahana dan durasi
-	private function calculateTotal($id_wahana, $durasi)
+	public function deleteSewa($id)
 	{
-		$wahana = $this->wahanaModel->find($id_wahana);
-		if (!$wahana) {
-			return 0; // Jika wahana tidak ditemukan
+		// Pastikan penyewaan dengan ID yang diberikan ada
+		$penyewaan = $this->penyewaanModel->find($id);
+
+		if (!$penyewaan) {
+			throw new \CodeIgniter\Exceptions\PageNotFoundException('Data penyewaan tidak ditemukan.');
 		}
 
-		// Menghitung total berdasarkan harga wahana * durasi
-		return $wahana['harga'] * (int)$durasi; // Durasi dikalikan dengan harga wahana
+		// Hapus data penyewaan dari database
+		$this->penyewaanModel->delete($id);
+
+		// Redirect ke halaman penyewaan dengan pesan sukses
+		return redirect()->to('/home/penyewaan')->with('message', 'Penyewaan berhasil dihapus.');
 	}
 
-
-	// Konversi durasi (HH:MM) menjadi jam desimal
-	private function convertDurationToHours($duration)
+	public function prosesBayar()
 	{
-		list($hours, $minutes) = explode(':', $duration);
-		return (int)$hours + (int)$minutes / 60;
+		// Get the input values
+		$idPenyewaan = $this->request->getPost('id_penyewaan');
+		$totalBayar = $this->request->getPost('total');
+		$bayar = $this->request->getPost('bayar');
+		$kembalian = $this->request->getPost('kembalian');
+		$paymentMethod = $this->request->getPost('payment');
+
+		// Validation: Ensure bayar is not less than total
+		if ($bayar < $totalBayar) {
+			session()->setFlashdata('error', 'Pembayaran tidak cukup!');
+			return redirect()->back();
+		}
+
+		// Generate transaction number automatically
+		$nomorTransaksi = 'TRX' . strtoupper(bin2hex(random_bytes(4))); // Generates an 8-character alphanumeric string
+
+		// Prepare transaction data
+		$dataTransaksi = [
+			'no_transaksi' => $nomorTransaksi,
+			'id_penyewaan' => $idPenyewaan,
+			'total' => $totalBayar,
+			'bayar' => $bayar,
+			'kembalian' => $kembalian,
+			'payment' => $paymentMethod,
+		];
+
+		// Insert data into Transaksi table
+		if (!$this->transaksiModel->insert($dataTransaksi)) {
+			session()->setFlashdata('error', 'Terjadi kesalahan saat menyimpan transaksi!');
+			return redirect()->back();
+		}
+
+		// Update Penyewaan status to "Berjalan"
+		$updateData = [
+			'status' => 'Berjalan',
+		];
+
+		if (!$this->penyewaanModel->update($idPenyewaan, $updateData)) {
+			session()->setFlashdata('error', 'Terjadi kesalahan saat memperbarui status penyewaan!');
+			return redirect()->back();
+		}
+
+		// Show success message
+		session()->setFlashdata('message', 'Pembayaran berhasil!');
+
+		// Redirect to home or another page
+		return redirect()->to('/home/penyewaan');
 	}
 
 	public function wahana()

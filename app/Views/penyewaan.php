@@ -146,7 +146,18 @@
     <div class="dashboard">
         <header>
             <h1>Penyewaan</h1>
+            <?php if (session()->getFlashdata('message')): ?>
+                <div class="alert alert-success">
+                    <?= session()->getFlashdata('message') ?>
+                </div>
+            <?php endif; ?>
         </header>
+        <?php if (session()->getFlashdata('message')): ?>
+            <div class="alert alert-success">
+                <?= session()->getFlashdata('message') ?>
+            </div>
+        <?php endif; ?>
+
         <main>
             <button class="btn-add" id="btnAdd">Tambah Sewa</button>
             <section>
@@ -161,11 +172,13 @@
                                     <th>Tanggal</th>
                                     <th>Waktu Mulai</th>
                                     <th>Durasi</th>
+                                    <th>Waktu Selesai</th>
                                     <th>Total</th>
                                     <th>Status</th>
                                     <th>Nama Orang Tua</th>
                                     <th>No HP</th>
                                     <th>Nama Anak</th>
+                                    <th>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -173,15 +186,42 @@
                                     <?php foreach ($penyewaan as $row): ?>
                                         <tr>
                                             <td><?= esc($row['id_penyewaan']) ?></td>
-                                            <td><?= esc($row['id_wahana']) ?></td>
+                                            <td><?= esc($row['nama_wahana']) ?></td> <!-- Tampilkan nama wahana -->
                                             <td><?= esc($row['tanggal']) ?></td>
                                             <td><?= esc($row['waktu_mulai']) ?></td>
-                                            <td><?= esc($row['durasi']) ?></td>
-                                            <td><?= esc($row['total']) ?></td>
+                                            <td><?= esc($row['durasi']) ?> Jam</td>
+                                            <td><?= esc($row['waktu_selesai']) ?></td>
+                                            <td>Rp <?= esc(number_format($row['total'], 0, ',', '.')) ?></td>
                                             <td><?= esc($row['status']) ?></td>
                                             <td><?= esc($row['nama_ortu']) ?></td>
                                             <td><?= esc($row['nohp']) ?></td>
                                             <td><?= esc($row['nama_anak']) ?></td>
+                                            <td>
+                                                <?php if ($row['status'] == 'Pending'): ?>
+                                                    <button class="btn-bayar"
+                                                        onclick="bayarPenyewaan(<?= esc($row['id_penyewaan']) ?>, <?= esc($row['total']) ?>)">Bayar</button>
+                                                <?php endif; ?>
+
+                                                <!-- Tombol Edit -->
+                                                <button class="btn-edit" data-id="<?= esc($row['id_penyewaan']) ?>"
+                                                    data-wahana="<?= esc($row['id_wahana']) ?>"
+                                                    data-tanggal="<?= esc($row['tanggal']) ?>"
+                                                    data-waktu_mulai="<?= esc($row['waktu_mulai']) ?>"
+                                                    data-durasi="<?= esc($row['durasi']) ?>"
+                                                    data-total="<?= esc($row['total']) ?>"
+                                                    data-nama_ortu="<?= esc($row['nama_ortu']) ?>"
+                                                    data-nohp="<?= esc($row['nohp']) ?>"
+                                                    data-nama_anak="<?= esc($row['nama_anak']) ?>"
+                                                    onclick="editPenyewaan(this)">Edit</button>
+
+                                                <!-- Tombol Delete -->
+                                                <form action="/home/deleteSewa/<?= esc($row['id_penyewaan']) ?>" method="POST"
+                                                    style="display:inline;">
+                                                    <button type="submit"
+                                                        onclick="return confirm('Apakah Anda yakin ingin menghapus penyewaan ini?')">Delete</button>
+                                                </form>
+
+                                            </td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
@@ -203,23 +243,28 @@
             <h3>Tambah Sewa</h3>
             <form action="/home/tambahsewa" method="POST">
                 <label for="id_wahana">Wahana</label>
-                <select name="id_wahana" id="id_wahana" onchange="updateTotal()">
+                <select name="id_wahana" id="id_wahana" onchange="updateTotal()" required>
                     <?php foreach ($wahana as $w): ?>
-                        <option value="<?= esc($w['id_wahana']) ?>" data-harga="<?= esc($w['harga']) ?>"><?= esc($w['nama_wahana']) ?></option>
+                        <option value="<?= esc($w['id_wahana']) ?>" data-harga="<?= esc($w['harga']) ?>">
+                            <?= esc($w['nama_wahana']) ?>
+                        </option>
                     <?php endforeach; ?>
                 </select>
 
                 <label for="tanggal">Tanggal</label>
-                <input type="date" name="tanggal" id="tanggal" value="<?= date('Y-m-d') ?>" required readonly>
+                <input type="date" name="tanggal" id="tanggal" value="<?= date('Y-m-d') ?>" required>
 
                 <label for="waktu_mulai">Waktu Mulai</label>
-                <input type="text" name="waktu_mulai" id="waktu_mulai" value="" required readonly>
+                <input type="time" name="waktu_mulai" id="waktu_mulai" required>
 
                 <label for="durasi">Durasi (Jam)</label>
-                <input type="number" name="durasi" id="durasi" required min="1" onchange="updateTotal()">
+                <input type="number" name="durasi" id="durasi" required min="1" step="1" onchange="updateTotal()">
+
+                <label for="waktu_selesai">Waktu Selesai</label>
+                <input type="time" name="waktu_selesai" id="waktu_selesai" readonly required>
 
                 <label for="total">Total</label>
-                <input type="text" name="total" id="total" value="" readonly>
+                <input type="number" name="total" id="total" value="" readonly required>
 
                 <label for="nama_ortu">Nama Orang Tua</label>
                 <input type="text" name="nama_ortu" id="nama_ortu" required>
@@ -235,6 +280,81 @@
             </form>
         </div>
     </div>
+
+    <!-- Pop-up Form -->
+    <div class="popup" id="popupForm">
+        <div class="popup-content">
+            <h3>Tambah/Edit Sewa</h3>
+            <form action="/home/tambahsewa" method="POST" id="formSewa">
+                <input type="hidden" name="id_penyewaan" id="id_penyewaan">
+
+                <label for="id_wahana">Wahana</label>
+                <select name="id_wahana" id="id_wahana" onchange="updateTotal()" required>
+                    <?php foreach ($wahana as $w): ?>
+                        <option value="<?= esc($w['id_wahana']) ?>" data-harga="<?= esc($w['harga']) ?>">
+                            <?= esc($w['nama_wahana']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+
+                <label for="tanggal">Tanggal</label>
+                <input type="date" name="tanggal" id="tanggal" value="<?= date('Y-m-d') ?>" required>
+
+                <label for="waktu_mulai">Waktu Mulai</label>
+                <input type="time" name="waktu_mulai" id="waktu_mulai" required>
+
+                <label for="durasi">Durasi (Jam)</label>
+                <input type="number" name="durasi" id="durasi" required min="1" step="1" onchange="updateTotal()">
+
+                <label for="waktu_selesai">Waktu Selesai</label>
+                <input type="time" name="waktu_selesai" id="waktu_selesai" readonly required>
+
+                <label for="total">Total</label>
+                <input type="number" name="total" id="total" value="" readonly required>
+
+                <label for="nama_ortu">Nama Orang Tua</label>
+                <input type="text" name="nama_ortu" id="nama_ortu" required>
+
+                <label for="nohp">Nomor HP</label>
+                <input type="text" name="nohp" id="nohp" required>
+
+                <label for="nama_anak">Nama Anak</label>
+                <input type="text" name="nama_anak" id="nama_anak" required>
+
+                <button type="submit">Simpan</button>
+                <button type="button" class="close-btn" id="btnClose">Batal</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Pop-up Bayar -->
+    <div class="popup" id="popupBayarForm">
+        <div class="popup-content">
+            <h3>Pembayaran Penyewaan</h3>
+            <form action="/home/prosesBayar" method="POST">
+                <input type="hidden" name="id_penyewaan" id="id_penyewaan" required>
+
+                <label for="total">Total</label>
+                <input type="number" name="total" id="total_bayar" readonly required>
+
+                <label for="bayar">Bayar</label>
+                <input type="number" name="bayar" id="bayar" required oninput="updateKembalian()">
+
+                <label for="kembalian">Kembalian</label>
+                <input type="number" name="kembalian" id="kembalian" readonly required>
+
+                <label for="payment">Metode Pembayaran</label>
+                <select name="payment" id="payment" required>
+                    <option value="cash">Cash</option>
+                    <option value="transfer">Transfer</option>
+                </select>
+
+                <button type="submit">Proses Pembayaran</button>
+                <button type="button" class="close-btn" id="btnCloseBayar">Batal</button>
+            </form>
+        </div>
+    </div>
+
 
     <script>
         const btnAdd = document.getElementById('btnAdd');
@@ -261,6 +381,107 @@
                 document.getElementById('total').value = harga * durasi;
             }
         }
+
+        function updateTotal() {
+            const wahanaSelect = document.getElementById('id_wahana');
+            const selectedOption = wahanaSelect.options[wahanaSelect.selectedIndex];
+            const harga = selectedOption.getAttribute('data-harga'); // Harga wahana
+            const durasi = parseInt(document.getElementById('durasi').value); // Durasi dalam bilangan bulat
+
+            if (durasi && harga) {
+                document.getElementById('total').value = harga * durasi; // Hitung total harga
+            }
+        }
+
+        function updateWaktuSelesai() {
+            const waktuMulaiInput = document.getElementById('waktu_mulai');
+            const durasiInput = document.getElementById('durasi');
+
+            // Pastikan waktu mulai dan durasi sudah terisi
+            if (waktuMulaiInput.value && durasiInput.value) {
+                const waktuMulai = new Date(`1970-01-01T${waktuMulaiInput.value}:00`); // Konversi waktu mulai ke objek Date
+                waktuMulai.setHours(waktuMulai.getHours() + parseInt(durasiInput.value)); // Tambah durasi jam ke waktu mulai
+
+                // Format waktu selesai
+                const waktuSelesai = new Date(waktuMulai);
+                const hours = String(waktuSelesai.getHours()).padStart(2, '0');
+                const minutes = String(waktuSelesai.getMinutes()).padStart(2, '0');
+                const waktuSelesaiFormatted = `${hours}:${minutes}`;
+
+                // Set waktu selesai ke input
+                document.getElementById('waktu_selesai').value = waktuSelesaiFormatted;
+            }
+        }
+
+        // Panggil fungsi updateWaktuSelesai setiap kali durasi atau waktu mulai berubah
+        document.getElementById('waktu_mulai').addEventListener('change', updateWaktuSelesai);
+        document.getElementById('durasi').addEventListener('change', updateWaktuSelesai);
+        document.querySelector('form').addEventListener('submit', function () {
+            // Set waktu_selesai sebelum form disubmit
+            updateWaktuSelesai();
+        });
+
+        function editPenyewaan(button) {
+            const idPenyewaan = button.getAttribute('data-id');
+            const idWahana = button.getAttribute('data-wahana');
+            const tanggal = button.getAttribute('data-tanggal');
+            const waktuMulai = button.getAttribute('data-waktu_mulai');
+            const durasi = button.getAttribute('data-durasi');
+            const total = button.getAttribute('data-total');
+            const namaOrtu = button.getAttribute('data-nama_ortu');
+            const nohp = button.getAttribute('data-nohp');
+            const namaAnak = button.getAttribute('data-nama_anak');
+
+            // Set values in the form
+            document.getElementById('id_penyewaan').value = idPenyewaan;
+            document.getElementById('id_wahana').value = idWahana;
+            document.getElementById('tanggal').value = tanggal;
+            document.getElementById('waktu_mulai').value = waktuMulai;
+            document.getElementById('durasi').value = durasi;
+            document.getElementById('total').value = total;
+            document.getElementById('nama_ortu').value = namaOrtu;
+            document.getElementById('nohp').value = nohp;
+            document.getElementById('nama_anak').value = namaAnak;
+
+            // Show the popup
+            document.getElementById('popupForm').style.display = 'flex';
+        }
+
+        // Close the pop-up form
+        document.getElementById('btnClose').addEventListener('click', () => {
+            document.getElementById('popupForm').style.display = 'none';
+        });
+
+        // Fungsi untuk membuka form bayar
+        function bayarPenyewaan(id, total) {
+            document.getElementById('id_penyewaan').value = id;
+            document.getElementById('total_bayar').value = total;
+            document.getElementById('popupBayarForm').style.display = 'flex';  // Tampilkan pop-up
+        }
+
+        // Fungsi untuk menghitung kembalian
+        function updateKembalian() {
+            const bayar = parseFloat(document.getElementById('bayar').value);
+            const total = parseFloat(document.getElementById('total_bayar').value);
+            if (bayar >= total) {
+                document.getElementById('kembalian').value = bayar - total;
+            } else {
+                document.getElementById('kembalian').value = 0;
+            }
+        }
+
+        // Menutup pop-up bayar
+        document.getElementById('btnCloseBayar').addEventListener('click', function () {
+            document.getElementById('popupBayarForm').style.display = 'none';  // Sembunyikan pop-up
+        });
+
+        // Menutup pop-up jika klik di luar konten
+        window.addEventListener('click', function (event) {
+            if (event.target === document.getElementById('popupBayarForm')) {
+                document.getElementById('popupBayarForm').style.display = 'none';  // Sembunyikan pop-up
+            }
+        });
+
     </script>
 </body>
 

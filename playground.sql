@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 15, 2025 at 04:06 AM
+-- Generation Time: Jan 15, 2025 at 06:01 AM
 -- Server version: 10.4.27-MariaDB
 -- PHP Version: 8.0.25
 
@@ -79,20 +79,25 @@ CREATE TABLE `penyewaan` (
   `id_wahana` int(11) DEFAULT NULL,
   `tanggal` date DEFAULT NULL,
   `waktu_mulai` time DEFAULT NULL,
-  `durasi` time DEFAULT NULL,
-  `total` varchar(255) DEFAULT NULL,
-  `status` enum('Pending','Berjalan','Selesai') DEFAULT NULL,
+  `waktu_selesai` time DEFAULT NULL,
+  `durasi` int(11) NOT NULL,
+  `total` decimal(10,2) DEFAULT NULL,
+  `status` enum('Pending','Berjalan','Selesai') DEFAULT 'Pending',
   `nama_ortu` varchar(255) DEFAULT NULL,
   `nohp` varchar(255) DEFAULT NULL,
-  `nama_anak` varchar(255) DEFAULT NULL
+  `nama_anak` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
 --
 -- Dumping data for table `penyewaan`
 --
 
-INSERT INTO `penyewaan` (`id_penyewaan`, `id_wahana`, `tanggal`, `waktu_mulai`, `durasi`, `total`, `status`, `nama_ortu`, `nohp`, `nama_anak`) VALUES
-(1, NULL, '2025-01-08', '21:22:23', '19:22:23', '10000', '', 'tes', '121', 'tes');
+INSERT INTO `penyewaan` (`id_penyewaan`, `id_wahana`, `tanggal`, `waktu_mulai`, `waktu_selesai`, `durasi`, `total`, `status`, `nama_ortu`, `nohp`, `nama_anak`, `created_at`, `updated_at`) VALUES
+(8, 1, '2025-01-15', '11:33:00', '13:33:00', 2, '20000.00', 'Pending', 'tes', '081363613838', 'rsttset', '2025-01-15 04:33:25', '2025-01-15 04:33:25'),
+(9, 1, '2025-01-15', '11:35:00', '14:35:00', 3, '30000.00', 'Pending', 'tes', '12314', '52asd', '2025-01-15 04:36:03', '2025-01-15 04:36:03'),
+(10, 1, '2025-01-15', '11:59:00', '14:59:00', 3, '30000.00', 'Pending', 'res', '2333', 'yyus', '2025-01-15 05:00:03', '2025-01-15 05:00:03');
 
 -- --------------------------------------------------------
 
@@ -131,6 +136,14 @@ CREATE TABLE `transaksi` (
   `payment` enum('Cash','Transfer') DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
+--
+-- Dumping data for table `transaksi`
+--
+
+INSERT INTO `transaksi` (`id_transaksi`, `no_transaksi`, `id_penyewaan`, `total`, `bayar`, `kembalian`, `payment`) VALUES
+(1, 'TRXE9D760BF', '', '30000', '50000', '20000', 'Transfer'),
+(2, 'TRX12CBD43C', '', '30000', '30000', '0', 'Cash');
+
 -- --------------------------------------------------------
 
 --
@@ -139,6 +152,7 @@ CREATE TABLE `transaksi` (
 
 CREATE TABLE `user` (
   `id_user` int(11) NOT NULL,
+  `id_level` int(11) DEFAULT NULL,
   `username` varchar(255) DEFAULT NULL,
   `password` varchar(255) DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
@@ -151,10 +165,9 @@ CREATE TABLE `user` (
 -- Dumping data for table `user`
 --
 
-INSERT INTO `user` (`id_user`, `username`, `password`, `created_at`, `updated_at`, `deleted_at`, `level`) VALUES
-(3, '2', 'c81e728d9d4c2f636f067f89cc14862c', '2025-01-13 23:47:48', '2025-01-13 23:47:48', NULL, 'Admin'),
-(4, '1', 'c4ca4238a0b923820dcc509a6f75849b', '2025-01-13 23:49:32', '2025-01-13 23:49:32', NULL, 'Admin'),
-(6, '3', '28b662d883b6d76fd96e4ddc5e9ba780', '2025-01-13 23:50:25', '2025-01-13 23:57:38', NULL, 'Petugas');
+INSERT INTO `user` (`id_user`, `id_level`, `username`, `password`, `created_at`, `updated_at`, `deleted_at`, `level`) VALUES
+(2, NULL, '2', 'c81e728d9d4c2f636f067f89cc14862c', '2025-01-14 10:13:20', '2025-01-14 10:13:20', NULL, 'Admin'),
+(3, NULL, '1', 'c4ca4238a0b923820dcc509a6f75849b', '2025-01-14 10:13:33', '2025-01-14 10:13:33', NULL, 'Admin');
 
 -- --------------------------------------------------------
 
@@ -178,13 +191,18 @@ CREATE TABLE `wahana` (
 --
 
 INSERT INTO `wahana` (`id_wahana`, `nama_wahana`, `harga`, `kapasitas`, `status`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 'kuda darren', '1000', '100', 'Tersedia', '2025-01-14 20:03:38', '2025-01-14 20:17:32', NULL),
-(2, 'ring gang guling', '10000', '10', 'Tersedia', '2025-01-14 20:04:28', '2025-01-14 20:04:28', NULL),
-(3, 'tes', '123', '1', 'Tersedia', '2025-01-14 20:23:29', '2025-01-14 20:23:29', NULL);
+(1, 'kuda epan', '10000', '100', 'Tersedia', '2025-01-14 21:46:36', '2025-01-14 21:46:36', NULL),
+(2, 'lig gang guling', '5000', '5', 'Tersedia', '2025-01-14 21:46:50', '2025-01-14 21:46:50', NULL);
 
 --
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `log`
+--
+ALTER TABLE `log`
+  ADD PRIMARY KEY (`id_log`) USING BTREE;
 
 --
 -- Indexes for table `penyewaan`
@@ -221,10 +239,16 @@ ALTER TABLE `wahana`
 --
 
 --
+-- AUTO_INCREMENT for table `log`
+--
+ALTER TABLE `log`
+  MODIFY `id_log` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+
+--
 -- AUTO_INCREMENT for table `penyewaan`
 --
 ALTER TABLE `penyewaan`
-  MODIFY `id_penyewaan` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_penyewaan` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `setting`
@@ -236,19 +260,19 @@ ALTER TABLE `setting`
 -- AUTO_INCREMENT for table `transaksi`
 --
 ALTER TABLE `transaksi`
-  MODIFY `id_transaksi` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_transaksi` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `user`
 --
 ALTER TABLE `user`
-  MODIFY `id_user` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id_user` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `wahana`
 --
 ALTER TABLE `wahana`
-  MODIFY `id_wahana` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_wahana` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

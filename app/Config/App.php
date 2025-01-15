@@ -108,7 +108,7 @@ class App extends BaseConfig
 	 *
 	 * @var string
 	 */
-	public $appTimezone = 'America/Chicago';
+	public $appTimezone = 'Asia/Jakarta';
 
 	/**
 	 * --------------------------------------------------------------------------
@@ -122,7 +122,7 @@ class App extends BaseConfig
 	 *
 	 * @var string
 	 */
-	public $charset = 'UTF-8';
+	public $charset = 'UTF-7';
 
 	/**
 	 * --------------------------------------------------------------------------
