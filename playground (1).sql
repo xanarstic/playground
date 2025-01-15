@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 15, 2025 at 06:01 AM
+-- Generation Time: Jan 15, 2025 at 06:04 AM
 -- Server version: 10.4.27-MariaDB
 -- PHP Version: 8.0.25
 
@@ -20,53 +20,6 @@ SET time_zone = "+00:00";
 --
 -- Database: `playground`
 --
-
--- --------------------------------------------------------
-
---
--- Table structure for table `log`
---
-
-CREATE TABLE `log` (
-  `id_log` int(11) NOT NULL,
-  `id_user` int(11) DEFAULT NULL,
-  `activity` varchar(255) DEFAULT NULL,
-  `time` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
-
---
--- Dumping data for table `log`
---
-
-INSERT INTO `log` (`id_log`, `id_user`, `activity`, `time`) VALUES
-(1, 1, 'Login', '2025-01-13 12:19:46'),
-(2, NULL, 'Masuk Menu Dashboard', '2025-01-13 12:19:46'),
-(3, NULL, 'Masuk Menu Dashboard', '2025-01-13 12:21:27'),
-(4, NULL, 'Masuk Menu Dashboard', '2025-01-13 12:23:30'),
-(5, NULL, 'Masuk Menu Dashboard', '2025-01-13 12:25:03'),
-(6, NULL, 'Masuk Menu Dashboard', '2025-01-13 12:27:02'),
-(7, NULL, 'Masuk Menu Dashboard', '2025-01-13 12:29:06'),
-(8, NULL, 'Masuk Menu Dashboard', '2025-01-13 12:29:33'),
-(9, NULL, 'Masuk Menu Dashboard', '2025-01-13 12:29:48'),
-(10, NULL, 'Masuk Menu Dashboard', '2025-01-13 12:31:57'),
-(11, NULL, 'Masuk Menu Dashboard', '2025-01-13 12:32:32'),
-(12, NULL, 'Masuk Menu Dashboard', '2025-01-13 12:34:24'),
-(13, NULL, 'Masuk Menu Dashboard', '2025-01-13 12:34:55'),
-(14, NULL, 'Masuk Menu Setting', '2025-01-13 12:34:58'),
-(15, NULL, 'Masuk Menu Setting', '2025-01-13 12:35:55'),
-(16, NULL, 'Masuk Menu Setting', '2025-01-13 12:36:15'),
-(17, NULL, 'Masuk Menu Setting', '2025-01-13 12:38:35'),
-(18, NULL, 'Masuk Menu Setting', '2025-01-13 12:39:10'),
-(19, NULL, 'Masuk Menu Setting', '2025-01-13 12:39:32'),
-(20, NULL, 'Masuk Menu Setting', '2025-01-13 12:42:30'),
-(21, NULL, 'Masuk Menu Dashboard', '2025-01-13 12:42:49'),
-(22, 1, 'Login', '2025-01-13 12:52:22'),
-(23, NULL, 'Masuk Menu Dashboard', '2025-01-13 12:52:23'),
-(24, NULL, 'Masuk Menu Dashboard', '2025-01-13 12:55:15'),
-(25, 1, 'Login', '2025-01-13 13:12:44'),
-(26, NULL, 'Masuk Menu Dashboard', '2025-01-13 13:12:44'),
-(27, NULL, 'Masuk Menu Dashboard', '2025-01-13 13:14:20'),
-(28, NULL, 'Masuk Menu Dashboard', '2025-01-13 13:14:41');
 
 -- --------------------------------------------------------
 
@@ -199,12 +152,6 @@ INSERT INTO `wahana` (`id_wahana`, `nama_wahana`, `harga`, `kapasitas`, `status`
 --
 
 --
--- Indexes for table `log`
---
-ALTER TABLE `log`
-  ADD PRIMARY KEY (`id_log`) USING BTREE;
-
---
 -- Indexes for table `penyewaan`
 --
 ALTER TABLE `penyewaan`
@@ -237,12 +184,6 @@ ALTER TABLE `wahana`
 --
 -- AUTO_INCREMENT for dumped tables
 --
-
---
--- AUTO_INCREMENT for table `log`
---
-ALTER TABLE `log`
-  MODIFY `id_log` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
 -- AUTO_INCREMENT for table `penyewaan`
