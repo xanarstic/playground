@@ -97,6 +97,12 @@
                 </a>
             </li>
             <li>
+                <a href="<?= base_url('/home/penyewaan') ?>">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Penyewaan</span>
+                </a>
+            </li>
+            <li>
                 <a href="<?= base_url('/home/transaksi') ?>">
                     <i class="fas fa-hand-holding-usd"></i>
                     <span>Transaksi</span>

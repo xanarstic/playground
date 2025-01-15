@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 13, 2025 at 03:41 PM
+-- Generation Time: Jan 15, 2025 at 04:06 AM
 -- Server version: 10.4.27-MariaDB
 -- PHP Version: 8.0.25
 
@@ -81,11 +81,18 @@ CREATE TABLE `penyewaan` (
   `waktu_mulai` time DEFAULT NULL,
   `durasi` time DEFAULT NULL,
   `total` varchar(255) DEFAULT NULL,
-  `status` enum('Berjalan','Selesai') DEFAULT NULL,
+  `status` enum('Pending','Berjalan','Selesai') DEFAULT NULL,
   `nama_ortu` varchar(255) DEFAULT NULL,
   `nohp` varchar(255) DEFAULT NULL,
   `nama_anak` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
+
+--
+-- Dumping data for table `penyewaan`
+--
+
+INSERT INTO `penyewaan` (`id_penyewaan`, `id_wahana`, `tanggal`, `waktu_mulai`, `durasi`, `total`, `status`, `nama_ortu`, `nohp`, `nama_anak`) VALUES
+(1, NULL, '2025-01-08', '21:22:23', '19:22:23', '10000', '', 'tes', '121', 'tes');
 
 -- --------------------------------------------------------
 
@@ -106,7 +113,7 @@ CREATE TABLE `setting` (
 --
 
 INSERT INTO `setting` (`id_setting`, `namawebsite`, `icontab`, `iconlogin`, `iconmenu`) VALUES
-(1, 'Playground', 'logo-ph.png', 'logo-ph.png', '1736746772_moo-deng123dd34.webp');
+(1, 'Aplikasi Playground', 'logo_sph (1).png', 'sigma.jpg', 'logo_sph (1).png');
 
 -- --------------------------------------------------------
 
@@ -132,7 +139,6 @@ CREATE TABLE `transaksi` (
 
 CREATE TABLE `user` (
   `id_user` int(11) NOT NULL,
-  `id_level` int(11) DEFAULT NULL,
   `username` varchar(255) DEFAULT NULL,
   `password` varchar(255) DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
@@ -145,8 +151,10 @@ CREATE TABLE `user` (
 -- Dumping data for table `user`
 --
 
-INSERT INTO `user` (`id_user`, `id_level`, `username`, `password`, `created_at`, `updated_at`, `deleted_at`, `level`) VALUES
-(1, 1, 'Admin', '1', '2025-01-13 12:14:08', NULL, NULL, 'Admin');
+INSERT INTO `user` (`id_user`, `username`, `password`, `created_at`, `updated_at`, `deleted_at`, `level`) VALUES
+(3, '2', 'c81e728d9d4c2f636f067f89cc14862c', '2025-01-13 23:47:48', '2025-01-13 23:47:48', NULL, 'Admin'),
+(4, '1', 'c4ca4238a0b923820dcc509a6f75849b', '2025-01-13 23:49:32', '2025-01-13 23:49:32', NULL, 'Admin'),
+(6, '3', '28b662d883b6d76fd96e4ddc5e9ba780', '2025-01-13 23:50:25', '2025-01-13 23:57:38', NULL, 'Petugas');
 
 -- --------------------------------------------------------
 
@@ -166,14 +174,17 @@ CREATE TABLE `wahana` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci ROW_FORMAT=DYNAMIC;
 
 --
--- Indexes for dumped tables
+-- Dumping data for table `wahana`
 --
 
+INSERT INTO `wahana` (`id_wahana`, `nama_wahana`, `harga`, `kapasitas`, `status`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'kuda darren', '1000', '100', 'Tersedia', '2025-01-14 20:03:38', '2025-01-14 20:17:32', NULL),
+(2, 'ring gang guling', '10000', '10', 'Tersedia', '2025-01-14 20:04:28', '2025-01-14 20:04:28', NULL),
+(3, 'tes', '123', '1', 'Tersedia', '2025-01-14 20:23:29', '2025-01-14 20:23:29', NULL);
+
 --
--- Indexes for table `log`
+-- Indexes for dumped tables
 --
-ALTER TABLE `log`
-  ADD PRIMARY KEY (`id_log`) USING BTREE;
 
 --
 -- Indexes for table `penyewaan`
@@ -210,16 +221,10 @@ ALTER TABLE `wahana`
 --
 
 --
--- AUTO_INCREMENT for table `log`
---
-ALTER TABLE `log`
-  MODIFY `id_log` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
-
---
 -- AUTO_INCREMENT for table `penyewaan`
 --
 ALTER TABLE `penyewaan`
-  MODIFY `id_penyewaan` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_penyewaan` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `setting`
@@ -237,13 +242,13 @@ ALTER TABLE `transaksi`
 -- AUTO_INCREMENT for table `user`
 --
 ALTER TABLE `user`
-  MODIFY `id_user` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_user` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `wahana`
 --
 ALTER TABLE `wahana`
-  MODIFY `id_wahana` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_wahana` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

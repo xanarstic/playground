@@ -200,6 +200,7 @@
                                     <th>Status</th>
                                     <th>Created At</th>
                                     <th>Updated At</th>
+                                    <th>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -211,6 +212,10 @@
                                         <td><?= esc($wahana['status']) ?></td>
                                         <td><?= esc($wahana['created_at']) ?></td>
                                         <td><?= esc($wahana['updated_at']) ?></td>
+                                        <td>
+                                            <button onclick="editWahana(<?= $wahana['id_wahana'] ?>)">Edit</button>
+                                            <button onclick="deleteWahana(<?= $wahana['id_wahana'] ?>)">Delete</button>
+                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
@@ -261,6 +266,49 @@
                 </div>
             </div>
 
+            <div id="edit-popup-form" class="popup-form">
+                <div class="form-container">
+                    <h3>Edit Wahana</h3>
+                    <!-- Form untuk mengedit wahana -->
+                    <form action="/home/updateWahana" method="POST">
+                        <?= csrf_field() ?>
+
+                        <!-- ID Wahana (Hidden Field) -->
+                        <input type="hidden" id="wahana_id" name="wahana_id">
+
+                        <label for="edit_nama_wahana">Nama Wahana</label>
+                        <input type="text" id="edit_nama_wahana" name="nama_wahana" required>
+                        <?php if (isset($errors['nama_wahana'])): ?>
+                            <div class="error"><?= esc($errors['nama_wahana']) ?></div>
+                        <?php endif; ?>
+
+                        <label for="edit_harga">Harga</label>
+                        <input type="text" id="edit_harga" name="harga" required>
+                        <?php if (isset($errors['harga'])): ?>
+                            <div class="error"><?= esc($errors['harga']) ?></div>
+                        <?php endif; ?>
+
+                        <label for="edit_kapasitas">Kapasitas</label>
+                        <input type="text" id="edit_kapasitas" name="kapasitas" required>
+                        <?php if (isset($errors['kapasitas'])): ?>
+                            <div class="error"><?= esc($errors['kapasitas']) ?></div>
+                        <?php endif; ?>
+
+                        <label for="edit_status">Status</label>
+                        <select id="edit_status" name="status" required>
+                            <option value="Tersedia">Tersedia</option>
+                            <option value="Tidak Tersedia">Tidak Tersedia</option>
+                        </select>
+                        <?php if (isset($errors['status'])): ?>
+                            <div class="error"><?= esc($errors['status']) ?></div>
+                        <?php endif; ?>
+
+                        <button type="submit">Update Wahana</button>
+                        <button type="button" class="close-popup-btn" onclick="closeEditPopup()">Cancel</button>
+                    </form>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -271,6 +319,30 @@
 
         function closePopup() {
             document.getElementById('popup-form').style.display = 'none';
+        }
+
+        function editWahana(wahanaId) {
+            // Fetch data from the server
+            fetch(`/home/getWahana/${wahanaId}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Fill the form with fetched data
+                    document.getElementById('wahana_id').value = data.id_wahana;
+                    document.getElementById('edit_nama_wahana').value = data.nama_wahana;
+                    document.getElementById('edit_harga').value = data.harga;
+                    document.getElementById('edit_kapasitas').value = data.kapasitas;
+                    document.getElementById('edit_status').value = data.status;
+
+                    // Show the popup
+                    document.getElementById('edit-popup-form').style.display = 'flex';
+                })
+                .catch(error => {
+                    console.error('Error fetching wahana data:', error);
+                });
+        }
+
+        function closeEditPopup() {
+            document.getElementById('edit-popup-form').style.display = 'none';
         }
     </script>
 </body>

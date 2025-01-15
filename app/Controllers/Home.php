@@ -5,11 +5,20 @@ namespace App\Controllers;
 use App\Models\UserModel;
 use App\Models\SettingModel;
 use App\Models\Wahanamodel;
+use App\Models\Penyewaanmodel;
 use CodeIgniter\Controller;
 use CodeIgniter\Session\Session;
 
 class Home extends BaseController
 {
+	protected $penyewaanModel;
+	protected $wahanaModel;
+
+	public function __construct()
+	{
+		$this->penyewaanModel = new PenyewaanModel();
+		$this->wahanaModel = new WahanaModel();
+	}
 	public function dashboard()
 	{
 		$settingModel = new SettingModel();
@@ -190,6 +199,88 @@ class Home extends BaseController
 		echo view('menu', ['setting' => $settingData]);
 	}
 
+	public function Penyewaan()
+	{
+		$settingModel = new SettingModel();
+		$penyewaanModel = new PenyewaanModel(); // Load model penyewaan
+		$wahanaModel = new WahanaModel(); // Add the wahana model for fetching wahana data
+
+		// Fetch setting data
+		$settingData = $settingModel->first(); // Fetch the first row, assuming only one settings row
+
+		$session = session();
+
+		// Check if the user is logged in
+		if (!$session->get('logged_in')) {
+			return redirect()->to('/home/login');
+		}
+
+		$data = [
+			'penyewaan' => $penyewaanModel->findAll(), // Ambil semua data penyewaan
+			'wahana' => $wahanaModel->findAll() // Ambil semua data wahana
+		];
+		// Load views
+		echo view('menu', ['setting' => $settingData]);
+		return view('penyewaan', $data);
+	}
+
+	public function tambahsewa()
+	{
+		// Validasi input
+		if (!$this->validate([
+			'id_wahana'   => 'required|integer',
+			'tanggal'     => 'required|valid_date',
+			'waktu_mulai' => 'required',
+			'durasi'      => 'required',
+			'nama_ortu'   => 'required',
+			'nohp'        => 'required|numeric',
+			'nama_anak'   => 'required'
+		])) {
+			return redirect()->back()->with('errors', $this->validator->getErrors());
+		}
+
+		// Ambil input
+		$data = [
+			'id_wahana'   => $this->request->getPost('id_wahana'),
+			'tanggal'     => date('Y-m-d'), // Set the current date
+			'waktu_mulai' => date('Y-m-d H:i:s'), // Set the current time
+			'durasi'      => $this->request->getPost('durasi'),
+			'total'       => $this->calculateTotal(
+				$this->request->getPost('id_wahana'),
+				$this->request->getPost('durasi')
+			),
+			'status'      => 'Pending',
+			'nama_ortu'   => $this->request->getPost('nama_ortu'),
+			'nohp'        => $this->request->getPost('nohp'),
+			'nama_anak'   => $this->request->getPost('nama_anak')
+		];
+
+		// Simpan ke database
+		$this->penyewaanModel->save($data);
+
+		return redirect()->to('home/penyewaan')->with('success', 'Data penyewaan berhasil ditambahkan!');
+	}
+
+	// Fungsi untuk menghitung total berdasarkan wahana dan durasi
+	private function calculateTotal($id_wahana, $durasi)
+	{
+		$wahana = $this->wahanaModel->find($id_wahana);
+		if (!$wahana) {
+			return 0; // Jika wahana tidak ditemukan
+		}
+
+		// Menghitung total berdasarkan harga wahana * durasi
+		return $wahana['harga'] * (int)$durasi; // Durasi dikalikan dengan harga wahana
+	}
+
+
+	// Konversi durasi (HH:MM) menjadi jam desimal
+	private function convertDurationToHours($duration)
+	{
+		list($hours, $minutes) = explode(':', $duration);
+		return (int)$hours + (int)$minutes / 60;
+	}
+
 	public function wahana()
 	{
 		$settingModel = new SettingModel();
@@ -213,6 +304,85 @@ class Home extends BaseController
 	}
 	public function addWahana()
 	{
+		$session = session();
+		$wahanaModel = new \App\Models\WahanaModel();
+
+		// Validate the form input
+		$validation = \Config\Services::validation();
+		$validation->setRules([
+			'nama_wahana' => 'required|min_length[3]',
+			'harga' => 'required|numeric',
+			'kapasitas' => 'required|numeric',
+			'status' => 'required|in_list[Tersedia,Tidak Tersedia]',
+		]);
+
+		if (!$this->validate($validation->getRules())) {
+			// If validation fails, set the errors and redirect back to the wahana view
+			return redirect()->to('/home/wahana')->withInput()->with('errors', $this->validator->getErrors());
+		}
+
+		// Prepare data for insertion
+		$data = [
+			'nama_wahana' => $this->request->getPost('nama_wahana'),
+			'harga' => $this->request->getPost('harga'),
+			'kapasitas' => $this->request->getPost('kapasitas'),
+			'status' => $this->request->getPost('status'),
+		];
+
+		// Insert the new wahana into the database
+		if ($wahanaModel->insert($data)) {
+			// Set a success message and redirect
+			$session->setFlashdata('success', 'Wahana added successfully.');
+		} else {
+			// Set an error message if insertion fails
+			$session->setFlashdata('errors', 'Failed to add wahana.');
+		}
+
+		return redirect()->to('/home/wahana');
+	}
+
+	public function getWahana($id)
+	{
+		$wahanaModel = new \App\Models\WahanaModel();
+		$wahana = $wahanaModel->find($id);
+		return $this->response->setJSON($wahana);
+	}
+
+	public function updateWahana()
+	{
+		$session = session();
+		$wahanaModel = new \App\Models\WahanaModel();
+
+		// Validate the form input
+		$validation = \Config\Services::validation();
+		$validation->setRules([
+			'nama_wahana' => 'required|min_length[3]',
+			'harga' => 'required|numeric',
+			'kapasitas' => 'required|numeric',
+			'status' => 'required|in_list[Tersedia,Tidak Tersedia]',
+		]);
+
+		if (!$this->validate($validation->getRules())) {
+			return redirect()->to('/home/wahana')->withInput()->with('errors', $this->validator->getErrors());
+		}
+
+		// Prepare data for update
+		$data = [
+			'id_wahana' => $this->request->getPost('wahana_id'),
+			'nama_wahana' => $this->request->getPost('nama_wahana'),
+			'harga' => $this->request->getPost('harga'),
+			'kapasitas' => $this->request->getPost('kapasitas'),
+			'status' => $this->request->getPost('status'),
+		];
+
+		// Update the wahana in the database
+		if ($wahanaModel->save($data)) {
+			$session->setFlashdata('success', 'Wahana updated successfully.');
+		} else {
+			$session->setFlashdata('errors', 'Failed to update wahana.');
+		}
+
+		return redirect()->to('/home/wahana');
 	}
 
 	public function setting()
