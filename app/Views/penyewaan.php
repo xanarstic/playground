@@ -182,14 +182,14 @@
                                     <?php foreach ($penyewaan as $row): ?>
                                         <tr>
                                             <td><?= esc($row['id_penyewaan']) ?></td>
-                                            <td><?= esc($row['nama_wahana']) ?></td> <!-- Tampilkan nama wahana -->
+                                            <td><?= esc($row['nama_wahana']) ?></td>
                                             <td><?= esc($row['tanggal']) ?></td>
                                             <td><?= esc($row['waktu_mulai']) ?></td>
                                             <td><?= esc($row['durasi']) ?> Jam</td>
                                             <td><?= esc($row['waktu_selesai']) ?></td>
                                             <td id="countdown-<?= esc($row['id_penyewaan']) ?>"></td>
                                             <td>Rp <?= esc(number_format($row['total'], 0, ',', '.')) ?></td>
-                                            <td><?= esc($row['status']) ?></td>
+                                            <td id="status-<?= esc($row['id_penyewaan']) ?>"><?= esc($row['status']) ?></td>
                                             <td><?= esc($row['nama_ortu']) ?></td>
                                             <td><?= esc($row['nohp']) ?></td>
                                             <td><?= esc($row['nama_anak']) ?></td>
@@ -198,20 +198,8 @@
                                                     <button class="btn-bayar"
                                                         onclick="bayarPenyewaan(<?= esc($row['id_penyewaan']) ?>, <?= esc($row['total']) ?>)">Bayar</button>
                                                 <?php endif; ?>
-
-                                                <!-- Tombol Edit -->
                                                 <button class="btn-edit" data-id="<?= esc($row['id_penyewaan']) ?>"
-                                                    data-wahana="<?= esc($row['id_wahana']) ?>"
-                                                    data-tanggal="<?= esc($row['tanggal']) ?>"
-                                                    data-waktu_mulai="<?= esc($row['waktu_mulai']) ?>"
-                                                    data-durasi="<?= esc($row['durasi']) ?>"
-                                                    data-total="<?= esc($row['total']) ?>"
-                                                    data-nama_ortu="<?= esc($row['nama_ortu']) ?>"
-                                                    data-nohp="<?= esc($row['nohp']) ?>"
-                                                    data-nama_anak="<?= esc($row['nama_anak']) ?>"
                                                     onclick="editPenyewaan(this)">Edit</button>
-
-                                                <!-- Tombol Delete -->
                                                 <form action="/home/deleteSewa/<?= esc($row['id_penyewaan']) ?>" method="POST"
                                                     style="display:inline;">
                                                     <button type="submit"
@@ -220,12 +208,15 @@
                                             </td>
                                         </tr>
                                         <script>
-                                            startCountdown(<?= esc($row['id_penyewaan']) ?>, '<?= esc($row['waktu_mulai']) ?>', '<?= esc($row['waktu_selesai']) ?>');
+                                            startCountdown(<?= esc($row['id_penyewaan']) ?>,
+                                                '<?= date('c', strtotime($row['waktu_mulai'])) ?>',
+                                                '<?= date('c', strtotime($row['waktu_selesai'])) ?>',
+                                                '<?= esc($row['status']) ?>');
                                         </script>
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <tr>
-                                        <td colspan="10">No data available</td>
+                                        <td colspan="13">No data available</td>
                                     </tr>
                                 <?php endif; ?>
                             </tbody>
@@ -372,17 +363,6 @@
         function updateTotal() {
             const wahanaSelect = document.getElementById('id_wahana');
             const selectedOption = wahanaSelect.options[wahanaSelect.selectedIndex];
-            const harga = selectedOption.getAttribute('data-harga');
-            const durasi = document.getElementById('durasi').value;
-
-            if (durasi) {
-                document.getElementById('total').value = harga * durasi;
-            }
-        }
-
-        function updateTotal() {
-            const wahanaSelect = document.getElementById('id_wahana');
-            const selectedOption = wahanaSelect.options[wahanaSelect.selectedIndex];
             const harga = selectedOption.getAttribute('data-harga'); // Harga wahana
             const durasi = parseInt(document.getElementById('durasi').value); // Durasi dalam bilangan bulat
 
@@ -507,45 +487,78 @@
             console.log("Form akan disubmit dengan id_penyewaan: " + idPenyewaan);
         };
 
-        function startCountdown(id, waktuMulai, waktuSelesai) {
-            // Parsing waktu mulai dan selesai
-            var waktuMulai = new Date(waktuMulai).getTime(); // Waktu mulai dalam milidetik
-            var waktuSelesai = new Date(waktuSelesai).getTime(); // Waktu selesai dalam milidetik
+        function startCountdown(id, waktuMulai, waktuSelesai, statusAwal) {
+            // Mengatur timezone ke Asia/Jakarta
+            const timezoneOffset = 7 * 60 * 60 * 1000; // Offset 7 jam dari UTC
+            const waktuMulaiTimestamp = new Date(waktuMulai).getTime() + timezoneOffset;
+            const waktuSelesaiTimestamp = new Date(waktuSelesai).getTime() + timezoneOffset;
 
-            // Cek jika waktu_selesai sudah lewat
-            if (waktuSelesai <= new Date().getTime()) {
-                document.getElementById("countdown-" + id).innerHTML = "00:00:00"; // Jika sudah selesai, tampilkan 00:00:00
-                updateStatusToSelesai(id); // Update status ke "Selesai"
-                return;
+            // Mendapatkan waktu sekarang
+            const waktuSekarang = new Date().getTime();
+
+            // Jika waktu selesai sudah tercapai
+            if (waktuSelesaiTimestamp <= waktuSekarang) {
+                if (statusAwal !== "Selesai") {
+                    // Update status di UI
+                    document.getElementById('countdown-' + id).innerText = "Waktu Habis";
+                    document.getElementById('status-' + id).innerText = "Selesai";
+
+                    // Kirim request untuk update status di server
+                    updateStatusPenyewaan(id, 'Selesai');
+                }
+                return; // Hentikan countdown
             }
 
-            var countdownInterval = setInterval(function() {
-                var currentTime = new Date().getTime(); // Waktu sekarang
-                var distance = waktuSelesai - currentTime; // Selisih waktu
+            // Menghitung sisa waktu
+            const sisaWaktu = waktuSelesaiTimestamp - waktuSekarang;
+            const hours = Math.floor((sisaWaktu / (1000 * 60 * 60)) % 24);
+            const minutes = Math.floor((sisaWaktu / (1000 * 60)) % 60);
+            const seconds = Math.floor((sisaWaktu / 1000) % 60);
 
-                if (distance < 0) {
-                    clearInterval(countdownInterval); // Jika waktu selesai, hentikan countdown
-                    document.getElementById("countdown-" + id).innerHTML = "Selesai"; // Tampilkan 'Selesai'
-                    updateStatusToSelesai(id); // Update status ke "Selesai"
-                } else {
-                    var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)); // Jam
-                    var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)); // Menit
-                    var seconds = Math.floor((distance % (1000 * 60)) / 1000); // Detik
-                    document.getElementById("countdown-" + id).innerHTML = hours + "h " + minutes + "m " + seconds + "s "; // Menampilkan countdown
-                }
+            // Update countdown di UI
+            document.getElementById('countdown-' + id).innerText = `${hours} Jam ${minutes} Menit ${seconds} Detik`;
+
+            // Perbarui countdown setiap detik
+            setTimeout(function() {
+                startCountdown(id, waktuMulai, waktuSelesai, statusAwal);
             }, 1000);
         }
 
+        // Fungsi untuk mengupdate status di server
+        function updateStatusPenyewaan(id, status) {
+            fetch(`/home/updateStatusPenyewaan/${id}`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        status: status
+                    }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log(`Status Penyewaan ID ${id} berhasil diperbarui menjadi ${status}`);
+                        location.reload(); // Refresh otomatis setelah update
+                    } else {
+                        console.error('Error updating status');
+                    }
+                })
+                .catch(error => console.error('Error updating status:', error));
+        }
+
         function updateStatusToSelesai(id) {
+            console.log("Updating status for ID: " + id); // Debugging log
             fetch(`/penyewaan/updateStatus/${id}`, {
                     method: 'POST',
                 }).then(response => response.json())
                 .then(data => {
-                    console.log('Status updated to Selesai');
+                    console.log('Status updated to Selesai', data);
+                }).catch(error => {
+                    console.error("Error updating status: ", error);
                 });
         }
     </script>
 </body>
-
 
 </html>

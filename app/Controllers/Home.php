@@ -230,25 +230,19 @@ class Home extends BaseController
 	public function penyewaan()
 	{
 		$settingModel = new SettingModel();
-		$penyewaanModel = new PenyewaanModel(); // Model Penyewaan
+		$penyewaanModel = new PenyewaanModel();
 		$session = session();
 
-		// Check if the user is logged in
 		if (!$session->get('logged_in')) {
 			return redirect()->to('/home/login');
 		}
 
-		// Ambil data penyewaan untuk countdown
 		$penyewaanData = $penyewaanModel->getAllPenyewaan();
 
-		// Format waktu_mulai dan waktu_selesai untuk memastikan data benar
-		// Format waktu_mulai dan waktu_selesai menjadi format 'Y-m-d H:i:s'
-		foreach ($penyewaanData as &$row) {
-			$row['waktu_mulai'] = date('Y-m-d H:i:s', strtotime($row['waktu_mulai']));
-			$row['waktu_selesai'] = date('Y-m-d H:i:s', strtotime($row['waktu_selesai']));
+		if (empty($penyewaanData)) {
+			log_message('error', 'No penyewaan data available');
 		}
 
-		// Passing data ke view
 		$data = [
 			'penyewaan' => $penyewaanData,
 			'wahana' => $this->wahanaModel->findAll(),
@@ -256,18 +250,23 @@ class Home extends BaseController
 			'idpenyewaan' => $penyewaanData[0]['id_penyewaan'] ?? null, // Default to null if no data
 		];
 
-		// Load views
 		echo view('menu', ['setting' => $data['setting']]);
 		return view('penyewaan', $data);
 	}
 
-	// Method untuk update status setelah countdown selesai
-	public function updateStatus($id)
+	public function updateStatusPenyewaan($id)
 	{
 		$penyewaanModel = new PenyewaanModel();
-		$penyewaanModel->updateStatus($id); // Mengubah status menjadi "Selesai"
-		return $this->response->setJSON(['status' => 'Selesai']);
+		$requestData = $this->request->getJSON();
+
+		if (isset($requestData->status)) {
+			$penyewaanModel->update($id, ['status' => $requestData->status]);
+			return $this->response->setJSON(['success' => true]);
+		}
+
+		return $this->response->setJSON(['success' => false]);
 	}
+
 
 	public function tambahSewa()
 	{
@@ -428,6 +427,20 @@ class Home extends BaseController
 		// Redirect to home or another page
 		return redirect()->to('/home/penyewaan');
 	}
+
+	public function checkAndUpdateStatus()
+	{
+		// Ambil semua penyewaan dengan status 'berjalan'
+		$penyewaanData = $this->penyewaanModel->where('status', 'berjalan')->findAll();
+
+		foreach ($penyewaanData as $penyewaan) {
+			// Update status jika sudah waktunya
+			$this->penyewaanModel->updateStatusAfterCountdown($penyewaan['id_penyewaan']);
+		}
+
+		return redirect()->to('/home/penyewaan'); // Atau redirect ke halaman yang sesuai
+	}
+
 
 	public function wahana()
 	{
