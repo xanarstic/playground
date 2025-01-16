@@ -168,6 +168,7 @@
                                     <th>Waktu Mulai</th>
                                     <th>Durasi</th>
                                     <th>Waktu Selesai</th>
+                                    <th>Countdown</th>
                                     <th>Total</th>
                                     <th>Status</th>
                                     <th>Nama Orang Tua</th>
@@ -186,6 +187,7 @@
                                             <td><?= esc($row['waktu_mulai']) ?></td>
                                             <td><?= esc($row['durasi']) ?> Jam</td>
                                             <td><?= esc($row['waktu_selesai']) ?></td>
+                                            <td id="countdown-<?= esc($row['id_penyewaan']) ?>"></td>
                                             <td>Rp <?= esc(number_format($row['total'], 0, ',', '.')) ?></td>
                                             <td><?= esc($row['status']) ?></td>
                                             <td><?= esc($row['nama_ortu']) ?></td>
@@ -215,9 +217,11 @@
                                                     <button type="submit"
                                                         onclick="return confirm('Apakah Anda yakin ingin menghapus penyewaan ini?')">Delete</button>
                                                 </form>
-
                                             </td>
                                         </tr>
+                                        <script>
+                                            startCountdown(<?= esc($row['id_penyewaan']) ?>, '<?= esc($row['waktu_mulai']) ?>', '<?= esc($row['waktu_selesai']) ?>');
+                                        </script>
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <tr>
@@ -327,7 +331,7 @@
         <div class="popup-content">
             <h3>Pembayaran Penyewaan</h3>
             <form action="/home/prosesBayar" method="POST" id="bayarForm">
-                <input type="hidden" name="id_penyewaan" id="id_penyewaan" required>
+                <input type="hidden" name="id_penyewaan" value="<?= $idpenyewaan ?>">
 
                 <label for="total">Total</label>
                 <input type="number" name="total" id="total_bayar" readonly required>
@@ -502,6 +506,44 @@
             const idPenyewaan = document.getElementById('id_penyewaan').value;
             console.log("Form akan disubmit dengan id_penyewaan: " + idPenyewaan);
         };
+
+        function startCountdown(id, waktuMulai, waktuSelesai) {
+            // Parsing waktu mulai dan selesai
+            var waktuMulai = new Date(waktuMulai).getTime(); // Waktu mulai dalam milidetik
+            var waktuSelesai = new Date(waktuSelesai).getTime(); // Waktu selesai dalam milidetik
+
+            // Cek jika waktu_selesai sudah lewat
+            if (waktuSelesai <= new Date().getTime()) {
+                document.getElementById("countdown-" + id).innerHTML = "00:00:00"; // Jika sudah selesai, tampilkan 00:00:00
+                updateStatusToSelesai(id); // Update status ke "Selesai"
+                return;
+            }
+
+            var countdownInterval = setInterval(function() {
+                var currentTime = new Date().getTime(); // Waktu sekarang
+                var distance = waktuSelesai - currentTime; // Selisih waktu
+
+                if (distance < 0) {
+                    clearInterval(countdownInterval); // Jika waktu selesai, hentikan countdown
+                    document.getElementById("countdown-" + id).innerHTML = "Selesai"; // Tampilkan 'Selesai'
+                    updateStatusToSelesai(id); // Update status ke "Selesai"
+                } else {
+                    var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)); // Jam
+                    var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)); // Menit
+                    var seconds = Math.floor((distance % (1000 * 60)) / 1000); // Detik
+                    document.getElementById("countdown-" + id).innerHTML = hours + "h " + minutes + "m " + seconds + "s "; // Menampilkan countdown
+                }
+            }, 1000);
+        }
+
+        function updateStatusToSelesai(id) {
+            fetch(`/penyewaan/updateStatus/${id}`, {
+                    method: 'POST',
+                }).then(response => response.json())
+                .then(data => {
+                    console.log('Status updated to Selesai');
+                });
+        }
     </script>
 </body>
 

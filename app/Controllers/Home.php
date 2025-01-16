@@ -26,10 +26,10 @@ class Home extends BaseController
 	public function dashboard()
 	{
 		$settingModel = new SettingModel();
+		$penyewaanModel = new PenyewaanModel();
 
 		// Fetch setting data
-		$settingData = $settingModel->first(); // Fetch the first row, assuming only one settings row
-
+		$settingData = $settingModel->first();
 
 		$session = session();
 
@@ -38,8 +38,30 @@ class Home extends BaseController
 			return redirect()->to('/home/login');
 		}
 
-		echo view('dashboard');
+		// Get today's date
+		$today = date('Y-m-d');
+
+		$pendingAndBerjalan = $penyewaanModel->getPenyewaanByDate($today, ['Pending', 'Berjalan']);
+		$selesai = $penyewaanModel->getPenyewaanByDate($today, ['Selesai']);
+
+		// Fetch data for today's date
+		$pendingAndBerjalan = $penyewaanModel
+			->whereIn('status', ['Pending', 'Berjalan'])
+			->where('tanggal', $today)
+			->findAll();
+
+		$selesai = $penyewaanModel
+			->where('status', 'Selesai')
+			->where('tanggal', $today)
+			->findAll();
+
 		echo view('menu', ['setting' => $settingData]);
+		// Pass data to the view
+		echo view('dashboard', [
+			'pendingAndBerjalan' => $pendingAndBerjalan,
+			'selesai' => $selesai,
+			'setting' => $settingData,
+		]);
 	}
 
 	public function login()
@@ -87,8 +109,6 @@ class Home extends BaseController
 			return redirect()->to('/home/login');
 		}
 	}
-
-
 
 	public function logout()
 	{
@@ -206,11 +226,11 @@ class Home extends BaseController
 		echo view('transaksi', ['transaksi' => $transaksiData, 'setting' => $settingData]);
 		echo view('menu', ['setting' => $settingData]);
 	}
-	
+
 	public function penyewaan()
 	{
-		$settingModel = new \App\Models\SettingModel();
-
+		$settingModel = new SettingModel();
+		$penyewaanModel = new PenyewaanModel(); // Model Penyewaan
 		$session = session();
 
 		// Check if the user is logged in
@@ -218,15 +238,35 @@ class Home extends BaseController
 			return redirect()->to('/home/login');
 		}
 
+		// Ambil data penyewaan untuk countdown
+		$penyewaanData = $penyewaanModel->getAllPenyewaan();
+
+		// Format waktu_mulai dan waktu_selesai untuk memastikan data benar
+		// Format waktu_mulai dan waktu_selesai menjadi format 'Y-m-d H:i:s'
+		foreach ($penyewaanData as &$row) {
+			$row['waktu_mulai'] = date('Y-m-d H:i:s', strtotime($row['waktu_mulai']));
+			$row['waktu_selesai'] = date('Y-m-d H:i:s', strtotime($row['waktu_selesai']));
+		}
+
+		// Passing data ke view
 		$data = [
-			'penyewaan' => $this->penyewaanModel->getAllPenyewaan(), // Ambil data penyewaan dengan join ke tabel wahana
+			'penyewaan' => $penyewaanData,
 			'wahana' => $this->wahanaModel->findAll(),
 			'setting' => $settingModel->first(),
+			'idpenyewaan' => $penyewaanData[0]['id_penyewaan'] ?? null, // Default to null if no data
 		];
 
 		// Load views
 		echo view('menu', ['setting' => $data['setting']]);
 		return view('penyewaan', $data);
+	}
+
+	// Method untuk update status setelah countdown selesai
+	public function updateStatus($id)
+	{
+		$penyewaanModel = new PenyewaanModel();
+		$penyewaanModel->updateStatus($id); // Mengubah status menjadi "Selesai"
+		return $this->response->setJSON(['status' => 'Selesai']);
 	}
 
 	public function tambahSewa()
@@ -380,17 +420,7 @@ class Home extends BaseController
 			log_message('error', 'Failed to insert transaksi: ' . print_r($dataTransaksi, true)); // Log failure
 			return redirect()->back();
 		}
-
-		// Update Penyewaan status to "Berjalan"
-		$updateData = [
-			'status' => 'Berjalan',
-		];
-
-		if (!$this->penyewaanModel->update($idPenyewaan, $updateData)) {
-			session()->setFlashdata('error', 'Terjadi kesalahan saat memperbarui status penyewaan!');
-			log_message('error', 'Failed to update penyewaan status: ' . $idPenyewaan); // Log failure
-			return redirect()->back();
-		}
+		$this->penyewaanModel->update($idPenyewaan, ['status' => 'berjalan']);
 
 		// Show success message
 		session()->setFlashdata('message', 'Pembayaran berhasil!');

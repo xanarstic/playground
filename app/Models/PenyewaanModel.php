@@ -28,4 +28,24 @@ class PenyewaanModel extends Model
             ->orderBy('penyewaan.created_at', 'DESC')
             ->findAll();
     }
+
+    public function getPenyewaanByDate($date, $statuses = [])
+    {
+        $query = $this->where('tanggal', $date);
+
+        if (!empty($statuses)) {
+            $query = $query->whereIn('status', $statuses);
+        }
+
+        return $query->findAll();
+    }
+
+    public function getCountdownData()
+    {
+        return $this->findAll();
+    }
+    public function updateStatus($id)
+    {
+        return $this->update($id, ['status' => 'Selesai']);
+    }
 }

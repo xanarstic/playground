@@ -7,13 +7,11 @@
     <title>Dashboard</title>
 
     <style>
-        /* dashboard.css */
         body {
             margin: 0;
             font-family: Arial, sans-serif;
             background-color: #f4f4f9;
             padding-left: 250px;
-            /* Space for the sidebar */
         }
 
         .dashboard header {
@@ -50,6 +48,12 @@
             text-align: center;
         }
 
+        .table-box .table-wrapper {
+            overflow-x: auto;
+            overflow-y: hidden;
+            max-width: 100%;
+        }
+
         .table-box table {
             width: 100%;
             border-collapse: collapse;
@@ -69,7 +73,6 @@
         @media (max-width: 768px) {
             body {
                 padding-left: 200px;
-                /* Adjust for smaller sidebar */
             }
 
             .table-container {
@@ -86,75 +89,106 @@
             <h2 class="welcome-message">Welcome, <span class="username"><?= session()->get('username') ?></span> (<span class="level"><?= session()->get('level') ?></span>)</h2>
         </header>
         <main>
-            <!-- Tables Section -->
             <section>
                 <div class="table-container">
                     <!-- Playing Table (left) -->
                     <div class="table-box">
-                        <h3>Playing</h3>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Time</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Placeholder for data -->
-                                <tr>
-                                    <td><!-- Name will go here --></td>
-                                    <td><!-- Time will go here --></td>
-                                </tr>
-                                <!-- Add more rows as necessary -->
-                            </tbody>
-                        </table>
+                        <h3>Playing (Pending & Berjalan)</h3>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Wahana</th>
+                                        <th>Tanggal</th>
+                                        <th>Mulai</th>
+                                        <th>Selesai</th>
+                                        <th>Durasi</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                        <th>Nama Orang Tua</th>
+                                        <th>No. HP</th>
+                                        <th>Nama Anak</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($pendingAndBerjalan as $row): ?>
+                                        <tr>
+                                            <td><?= esc($row['id_penyewaan']) ?></td>
+                                            <td><?= esc($row['id_wahana']) ?></td>
+                                            <td><?= esc($row['tanggal']) ?></td>
+                                            <td><?= esc($row['waktu_mulai']) ?></td>
+                                            <td><?= esc($row['waktu_selesai']) ?></td>
+                                            <td><?= esc($row['durasi']) ?></td>
+                                            <td><?= esc($row['total']) ?></td>
+                                            <td><?= esc($row['status']) ?></td>
+                                            <td><?= esc($row['nama_ortu']) ?></td>
+                                            <td><?= esc($row['nohp']) ?></td>
+                                            <td><?= esc($row['nama_anak']) ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <!-- Done Table (right) -->
                     <div class="table-box">
-                        <h3>Done</h3>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Placeholder for data -->
-                                <tr>
-                                    <td><!-- Name will go here --></td>
-                                    <td><!-- Status will go here --></td>
-                                </tr>
-                                <!-- Add more rows as necessary -->
-                            </tbody>
-                        </table>
+                        <h3>Done (Selesai)</h3>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Wahana</th>
+                                        <th>Tanggal</th>
+                                        <th>Mulai</th>
+                                        <th>Selesai</th>
+                                        <th>Durasi</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                        <th>Nama Orang Tua</th>
+                                        <th>No. HP</th>
+                                        <th>Nama Anak</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($selesai as $row): ?>
+                                        <tr>
+                                            <td><?= esc($row['id_penyewaan']) ?></td>
+                                            <td><?= esc($row['id_wahana']) ?></td>
+                                            <td><?= esc($row['tanggal']) ?></td>
+                                            <td><?= esc($row['waktu_mulai']) ?></td>
+                                            <td><?= esc($row['waktu_selesai']) ?></td>
+                                            <td><?= esc($row['durasi']) ?></td>
+                                            <td><?= esc($row['total']) ?></td>
+                                            <td><?= esc($row['status']) ?></td>
+                                            <td><?= esc($row['nama_ortu']) ?></td>
+                                            <td><?= esc($row['nohp']) ?></td>
+                                            <td><?= esc($row['nama_anak']) ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
+
                 </div>
             </section>
         </main>
     </div>
 </body>
 
-<style>
-    @keyframes fadeInUp {
-        0% {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-
-        100% {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    /* Optional: Add a hover effect for the username and level */
-    .username:hover,
-    .level:hover {
-        text-decoration: underline;
-        cursor: pointer;
-    }
-</style>
+<script>
+    // Enable horizontal scrolling with mouse wheel
+    document.querySelectorAll('.table-wrapper').forEach(wrapper => {
+        wrapper.addEventListener('wheel', (e) => {
+            if (e.deltaY !== 0) {
+                e.preventDefault();
+                wrapper.scrollLeft += e.deltaY;
+            }
+        });
+    });
+</script>
 
 </html>
